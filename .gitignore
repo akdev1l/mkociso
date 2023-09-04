@@ -1,0 +1,9 @@
+dist
+*.log
+build
+debugdata
+pkglists
+*pkgsizes.txt
+lorax.conf
+*.rpm
+/src/**/__pycache__/cli.cpython-311.pyc

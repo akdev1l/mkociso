@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if ! podman image exists mkociso:latest; then
+    podman build -t mkociso:latest .
+fi
+
+podman run \
+    --rm \
+    -it \
+    --security-opt label=disable \
+    -v /dev:/dev \
+    -v "$PWD:$PWD" \
+    -w "$PWD" \
+    -e PWD \
+    --privileged \
+    mkociso:latest mkociso "$@"
