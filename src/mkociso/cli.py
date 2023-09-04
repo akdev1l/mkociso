@@ -12,7 +12,11 @@ import boto3
 
 from mkociso.engine import OcisoEngine
 
-basicConfig(level=INFO)
+basicConfig(
+    level=getenv('MKOCISO_LOG', default=INFO),
+    format="[%(asctime)s] %(name)s:%(levelname)s # %(message)s",
+)
+
 logger = getLogger("mkociso")
 
 
@@ -75,16 +79,16 @@ def main():
         cli_args.arch,
         cli_args.web,
         cli_args.net,
-    ),
+    )
     upload_result = None
 
     if cli_args.output.startswith("s3://"):
         bucket_name = cli_args.output.split("/")[2]
         object_key_prefix = "/".join(cli_args.output.split("/")[3:])
-        object_key = f"{object_prefix}/{build_result.vol_id}.iso"
+        object_key = f"{object_key_prefix}/{build_result.vol_id}.iso"
 
-        logger.info("detected output to S3 bucket {cli_args.output} key {object_key}")
-        s3_client.upload_file(build_result.build_image, bucket_name, object_key)
+        logger.info("pushing output to S3 bucket {cli_args.output} key {object_key}")
+        s3_client.upload_file(build_result.boot_iso, bucket_name, object_key)
 
     print(dumps({
         'build': build_result,

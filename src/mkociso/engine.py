@@ -12,6 +12,12 @@ import mkociso.lorax_templates as lorax_templates
 logger = getLogger(__name__)
 
 
+class OcisoImageBuildOutput(object):
+    def __init__(self, boot_iso, checksum, vol_id):
+        self.vol_id = vol_id
+        self.checksum = checksum
+        self.boot_iso = boot_iso
+
 class OcisoEngine(object):
     # f"--mirrorlist=https://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-{cli_args.release}&arch={cli_args.arch}",
     def __init__(self):
@@ -66,6 +72,7 @@ class OcisoEngine(object):
             ]
 
         logger.debug(f"executing lorax command {' '.join(lorax_cmd)}")
+        logger.info("starting lorax compose, it may take a while")
         lorax_process = run(lorax_cmd, capture_output=True)
 
         if lorax_process.returncode == 0:
@@ -73,14 +80,16 @@ class OcisoEngine(object):
             logger.info(f"lorax command succeeded proceding to create CHECKSUM file")
             checksum_cmd = ["sha256sum", "--tag", boot_iso]
             checksum_result = run(checksum_cmd, capture_output=True)
+            checksum_hash = checksum_result.stdout.decode("utf-8").splitlines()[0].split(" ")[-1]
 
             if checksum_result.returncode == 0:
                 logger.info("successfully created CHECKSUM file")
 
-                return {
-                    "boot_image": boot_iso,
-                    "checksum": checksum_result.stdout.decode("utf-8"),
-                }
+                return OcisoImageBuildOutput(
+                    boot_iso,
+                    checksum_hash,
+                    vol_id,
+                )
             else:
                 raise Exception(
                     f"there was an error generating CHECKSUM: {checksum_result.stderr.decode('utf-8')}"

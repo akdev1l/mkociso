@@ -6,4 +6,4 @@ pkglists
 *pkgsizes.txt
 lorax.conf
 *.rpm
-/src/**/__pycache__/cli.cpython-311.pyc
+src/*/**/__pycache__
