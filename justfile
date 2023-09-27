@@ -3,6 +3,7 @@ make-builder:
         -v $PWD/build:/outdir \
         --target builder \
         -t mkociso:builder \
+        -f Containerfile.builder \
         .
 
 make-rpm:
