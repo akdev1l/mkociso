@@ -58,6 +58,7 @@ def main():
         "-w",
         "--web",
         action="store_true",
+        default=False,
         help="Use anaconda web installer [EXPERIMENTAL]",
     )
     arg_parser.add_argument(
@@ -67,8 +68,24 @@ def main():
         default=False,
         help="Create netinstaller with boot_menu.yml",
     )
+    arg_parser.add_argument(
+        "-p",
+        "--package",
+        action='append',
+        help="Packages to install in installation runtime",
+        default=[],
+    )
+    arg_parser.add_argument(
+        "-s",
+        "--source",
+        help="Repository to add as source during compose",
+        action='append',
+        default=[],
+    )
+
 
     cli_args = arg_parser.parse_args()
+    logger.debug(f"CLI ARGS: {cli_args}")
 
     mkociso_engine = OcisoEngine()
     s3_client = boto3.client("s3")
@@ -77,8 +94,8 @@ def main():
         cli_args.release,
         cli_args.image,
         cli_args.arch,
-        cli_args.web,
-        cli_args.net,
+        cli_args.source,
+        cli_args.package,
     )
     upload_result = None
 
@@ -87,10 +104,17 @@ def main():
         object_key_prefix = "/".join(cli_args.output.split("/")[3:])
         object_key = f"{object_key_prefix}/{build_result.vol_id}.iso"
 
-        logger.info("pushing output to S3 bucket {cli_args.output} key {object_key}")
+        logger.info(f"pushing output to S3 bucket {cli_args.output} key {object_key}")
         s3_client.upload_file(build_result.boot_iso, bucket_name, object_key)
+        logger.info("succeeded uploading file")
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Body=f"SHA256 (build_result.boot_iso) = {build_result.checksum}",
+            Key=f"{object_key}.CHECKSUM",
+        )
+        logger.info("succeeded uploading CHECKSUM")
 
     print(dumps({
         'build': build_result,
         'upload': upload_result,
-    }))
+        }, default=lambda o : o.__dict__))

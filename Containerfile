@@ -1,7 +1,7 @@
-FROM fedora:38 as app
+FROM fedora:39
 
-COPY --from=mkociso:build /outdir/noarch/ /tmp
+COPY build/noarch /tmp/noarch
 
-RUN dnf install -y /tmp/*.rpm
+RUN dnf install -y /tmp/noarch/*.rpm
 
 ENTRYPOINT ["/usr/bin/mkociso"]

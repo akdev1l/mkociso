@@ -23,7 +23,7 @@ class OcisoEngine(object):
     def __init__(self):
         pass
 
-    def build_iso(self, release, image, arch, web, net):
+    def build_iso(self, release, image, arch, sources, packages):
         logger.info(f"building image f{release}/{arch}/{image}")
 
         image_name = image.split("/")[-1]
@@ -39,7 +39,7 @@ class OcisoEngine(object):
         logger.info(f"using github workspace = {github_workspace}")
 
         lorax_output_dir = path.join(github_workspace, "build", f"offline.{image_name}")
-        vol_id = f"UBlue.{image_name_untagged}.{release}.{arch}"
+        vol_id = f"UBlue-{image_name_untagged}-{release}-{arch}"
         mirror = self._select_mirror(arch, release)
         logger.info(f"selected mirror {mirror}")
 
@@ -68,8 +68,17 @@ class OcisoEngine(object):
                 "glibc-langpack-*",
                 "--installpkgs",
                 "langpacks-*",
-                lorax_output_dir,
             ]
+            
+            for source in sources:
+                lorax_cmd.append("-s")
+                lorax_cmd.append(source)
+
+            for package in packages:
+                lorax_cmd.append("-i")
+                lorax_cmd.append(package)
+            
+            lorax_cmd.append(lorax_output_dir)
 
         logger.debug(f"executing lorax command {' '.join(lorax_cmd)}")
         logger.info("starting lorax compose, it may take a while")
@@ -80,7 +89,8 @@ class OcisoEngine(object):
             logger.info(f"lorax command succeeded proceding to create CHECKSUM file")
             checksum_cmd = ["sha256sum", "--tag", boot_iso]
             checksum_result = run(checksum_cmd, capture_output=True)
-            checksum_hash = checksum_result.stdout.decode("utf-8").splitlines()[0].split(" ")[-1]
+            checksum_output = checksum_result.stdout.decode("utf-8").splitlines()[0]
+            checksum_hash = checksum_output.split(" ")[-1]
 
             if checksum_result.returncode == 0:
                 logger.info("successfully created CHECKSUM file")

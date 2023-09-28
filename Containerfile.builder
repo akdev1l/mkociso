@@ -1,4 +1,4 @@
-FROM fedora:38 as builder
+FROM fedora:39 as builder
 
 RUN dnf install \
         --disablerepo='*' \
@@ -8,12 +8,11 @@ RUN dnf install \
         'dnf-command(builddep)' \
         rpkg
 
-COPY . /usr/src
-
 WORKDIR /usr/src
 
-RUN rpkg spec --outdir /tmp \
-    && dnf builddep -y /tmp/*.spec
+RUN rpkg spec --outdir /outdir
+
+RUN dnf builddep -y /outdir/*.spec
 
 FROM builder as build
 
