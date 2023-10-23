@@ -13,4 +13,4 @@ podman run \
     -w "$PWD" \
     -e PWD \
     --privileged \
-    mkociso:latest mkociso "$@"
+    mkociso:latest "$@"
